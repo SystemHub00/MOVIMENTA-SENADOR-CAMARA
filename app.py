@@ -4,11 +4,8 @@ import traceback
 import uuid
 from datetime import datetime
 from urllib.parse import quote
-
 from flask import Flask, redirect, render_template_string, request, session, url_for
-
 from gsheet_utils import append_to_sheet
-
 
 ALLOWED_EMAIL_PATTERN = re.compile(
     r"^[a-zA-Z0-9_.+-]+@((gmail|hotmail|outlook|yahoo)\.(com|com\.br))$",
@@ -26,104 +23,53 @@ VALID_DDDS = {
     "81", "82", "83", "84", "85", "86", "87", "88", "89",
     "91", "92", "93", "94", "95", "96", "97", "98", "99",
 }
-
 # \u2500\u2500 LOCAIS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 LOCAL_OPTIONS = [
-    {"id": "1", "nome": "URUCANIA - SANTA CRUZ"},
-    {"id": "2", "nome": "SANTA CRUZ \u2014 SALA 01"},
+    {"id": "1", "nome": "MARCO 7 - SENADOR CAMA\u00c1 \u2014 SALA 1"},
 ]
-
 # \u2500\u2500 CAT\u00c1LOGO DE CURSOS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 COURSE_CATALOG = [
-    {"id": "1", "local_id": "1", "nome": "GERENCIAMENTO DE TR\u00c1FEGO PAGO"},
-    {"id": "2", "local_id": "1", "nome": "RECEPCIONISTA"},
-    {"id": "3", "local_id": "1", "nome": "INTELIG\u00caNCIA ARTIFICIAL"},
+    {"id": "1", "local_id": "1", "nome": "ATENDENTE DE SAL\u00c3O DE CAF\u00c9 DA MANH\u00c3"},
+    {"id": "2", "local_id": "1", "nome": "ORIENTADOR DE HOTELARIA"},
+    {"id": "3", "local_id": "1", "nome": "AUXILIAR ADMINISTRATIVO"},
     {"id": "4", "local_id": "1", "nome": "SOCIAL MEDIA"},
     {"id": "5", "local_id": "1", "nome": "MARKETING DIGITAL"},
-    # Novos cursos \u2014 SANTA CRUZ SALA 01
-    {"id": "6", "local_id": "2", "nome": "ASSISTENTE DE LOG\u00cdSTICA"},
-    {"id": "7", "local_id": "2", "nome": "AUXILIAR ADMINISTRATIVO"},
-    {"id": "3b", "local_id": "2", "nome": "INTELIG\u00caNCIA ARTIFICIAL"},
-    {"id": "5b", "local_id": "2", "nome": "MARKETING DIGITAL"},
 ]
-
 # \u2500\u2500 TURMAS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 TURMA_OPTIONS = [
-    # GERENCIAMENTO DE TR\u00c1FEGO PAGO
-    {"id": "1", "local_id": "1", "curso_id": "1", "turma_codigo": "02",
+    {"id": "1", "local_id": "1", "curso_id": "1", "turma_codigo": "01",
      "agenda_id": "1", "periodo_id": "1", "encerramento_id": "1", "endereco_id": "1"},
-    # RECEPCIONISTA
-    {"id": "2", "local_id": "1", "curso_id": "2", "turma_codigo": "07",
+    {"id": "2", "local_id": "1", "curso_id": "2", "turma_codigo": "01",
      "agenda_id": "2", "periodo_id": "1", "encerramento_id": "1", "endereco_id": "1"},
-    # INTELIG\u00caNCIA ARTIFICIAL
-    {"id": "3", "local_id": "1", "curso_id": "3", "turma_codigo": "17",
-     "agenda_id": "3", "periodo_id": "1", "encerramento_id": "1", "endereco_id": "1"},
-    # SOCIAL MEDIA - TURMA 17
-    {"id": "4", "local_id": "1", "curso_id": "4", "turma_codigo": "17",
-     "agenda_id": "4", "periodo_id": "1", "encerramento_id": "1", "endereco_id": "1"},
-    # SOCIAL MEDIA - TURMA 18
-    {"id": "5", "local_id": "1", "curso_id": "4", "turma_codigo": "18",
+    {"id": "3", "local_id": "1", "curso_id": "3", "turma_codigo": "01",
+     "agenda_id": "3", "periodo_id": "2", "encerramento_id": "2", "endereco_id": "1"},
+    {"id": "4", "local_id": "1", "curso_id": "4", "turma_codigo": "01",
+     "agenda_id": "4", "periodo_id": "2", "encerramento_id": "2", "endereco_id": "1"},
+    {"id": "5", "local_id": "1", "curso_id": "5", "turma_codigo": "01",
      "agenda_id": "5", "periodo_id": "2", "encerramento_id": "2", "endereco_id": "1"},
-    # MARKETING DIGITAL - TURMA 24
-    {"id": "6", "local_id": "1", "curso_id": "5", "turma_codigo": "24",
-     "agenda_id": "6", "periodo_id": "2", "encerramento_id": "2", "endereco_id": "1"},
-    # MARKETING DIGITAL - TURMA 25
-    {"id": "7", "local_id": "1", "curso_id": "5", "turma_codigo": "25",
-     "agenda_id": "7", "periodo_id": "2", "encerramento_id": "2", "endereco_id": "1"},
-    # \u2500\u2500 Novas turmas \u2014 SANTA CRUZ SALA 01 (adicionadas 10/08/2026) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    # INTELIG\u00caNCIA ARTIFICIAL \u2014 Seg/Qua 16h-18h
-    {"id": "8",  "local_id": "2", "curso_id": "3b", "turma_codigo": "01",
-     "agenda_id": "8",  "periodo_id": "3", "encerramento_id": "3", "endereco_id": "2"},
-    # ASSISTENTE DE LOG\u00cdSTICA \u2014 Seg/Qua 19h-21h
-    {"id": "9",  "local_id": "2", "curso_id": "6",  "turma_codigo": "01",
-     "agenda_id": "9",  "periodo_id": "3", "encerramento_id": "3", "endereco_id": "2"},
-    # AUXILIAR ADMINISTRATIVO \u2014 Ter/Qui 16h-18h
-    {"id": "10", "local_id": "2", "curso_id": "7",  "turma_codigo": "01",
-     "agenda_id": "10", "periodo_id": "4", "encerramento_id": "4", "endereco_id": "2"},
-    # MARKETING DIGITAL \u2014 Ter/Qui 19h-21h
-    {"id": "11", "local_id": "2", "curso_id": "5b", "turma_codigo": "01",
-     "agenda_id": "11", "periodo_id": "4", "encerramento_id": "4", "endereco_id": "2"},
 ]
-
 # \u2500\u2500 HOR\u00c1RIOS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 SCHEDULE_OPTIONS = {
-    "1":  {"dias_aula": "Segunda e Quarta", "horario": "09h at\u00e9 11h"},
-    "2":  {"dias_aula": "Segunda e Quarta", "horario": "13h at\u00e9 15h"},
-    "3":  {"dias_aula": "Segunda e Quarta", "horario": "16h at\u00e9 18h"},
-    "4":  {"dias_aula": "Segunda e Quarta", "horario": "19h at\u00e9 21h"},
-    "5":  {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "13h at\u00e9 15h"},
-    "6":  {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "09h at\u00e9 11h"},
-    "7":  {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "19h at\u00e9 21h"},
-    # Novos
-    "8":  {"dias_aula": "Segunda e Quarta", "horario": "16h at\u00e9 18h"},
-    "9":  {"dias_aula": "Segunda e Quarta", "horario": "19h at\u00e9 21h"},
-    "10": {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "16h at\u00e9 18h"},
-    "11": {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "19h at\u00e9 21h"},
+    "1": {"dias_aula": "Segunda e Quarta", "horario": "6h30 \u00e0s 8h30"},
+    "2": {"dias_aula": "Segunda e Quarta", "horario": "9h \u00e0s 11h"},
+    "3": {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "9h \u00e0s 11h"},
+    "4": {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "13h \u00e0s 15h"},
+    "5": {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "16h \u00e0s 18h"},
 }
-
 # \u2500\u2500 DATAS DE IN\u00cdCIO \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 START_DATE_OPTIONS = {
-    "1": "25/05/2026",
-    "2": "26/05/2026",
-    "3": "24/08/2026",
-    "4": "25/08/2026",
+    "1": "24/08/2026",
+    "2": "25/08/2026",
 }
-
 # \u2500\u2500 DATAS DE ENCERRAMENTO \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 END_DATE_OPTIONS = {
-    "1": "24/06/2026",
-    "2": "25/06/2026",
-    "3": "23/09/2026",
-    "4": "24/09/2026",
+    "1": "28/09/2026",
+    "2": "25/09/2026",
 }
-
 # \u2500\u2500 ENDERE\u00c7OS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 ADDRESS_OPTIONS = {
-    "1": "Estrada de Urucania, Rua B, No 15, Santa Cruz - CEP: 23570-295",
-    "2": "\U0001f4cdEstrada de Urucania, rua B, n\u00famero 15 - Santa Cruz",
+    "1": "\U0001f4cdBloco D'jorge do Marco Sete - Rua Marco Sete, n\u00b0102, Senador Cama\u00e1 - CEP: 21833-325",
 }
-
-
 def build_course_options():
     local_by_id  = {o["id"]: o for o in LOCAL_OPTIONS}
     course_by_id = {o["id"]: o for o in COURSE_CATALOG}
@@ -147,13 +93,11 @@ def build_course_options():
         })
     return result
 
-
 COURSE_OPTIONS       = build_course_options()
 LOCAL_OPTIONS_BY_ID  = {o["id"]: o for o in LOCAL_OPTIONS}
 COURSE_CATALOG_BY_ID = {o["id"]: o for o in COURSE_CATALOG}
 COURSE_OPTIONS_BY_ID = {o["id"]: o for o in COURSE_OPTIONS}
 COURSE_INFO          = COURSE_OPTIONS[0]
-
 
 def build_whatsapp_share_url(home_url):
     message = (
@@ -161,7 +105,6 @@ def build_whatsapp_share_url(home_url):
         f"Confira aqui: {home_url}"
     )
     return f"https://wa.me/?text={quote(message)}"
-
 
 def get_course_option(option_id):
     return COURSE_OPTIONS_BY_ID.get(str(option_id or ""))
@@ -187,14 +130,13 @@ def fill_form_data_from_selection(form_data):
         form_data["curso"] = sel_course["nome"]
     if sel_option:
         fill_form_data_from_option(form_data, sel_option)
-
 TEMPLATE_WIZARD = r'''
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>FGM</title>
+    <title>Movimenta Rio - Cristiane</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/assistant.css">
     <link href="https://fonts.googleapis.com/css2?family=Wise:wght@400;700;900&display=swap" rel="stylesheet">
@@ -211,21 +153,9 @@ TEMPLATE_WIZARD = r'''
         fbq('track', 'PageView');
     </script>
     <style>
-        :root {
-            --cor-principal:#1155cc; --cor-principal-escura:#0d47a1;
-            --cor-clara:#eef4ff; --cor-texto:#17386d;
-            --cor-borda:#a8c0f4; --sombra-card:0 18px 55px rgba(17,85,204,0.18);
-        }
-        *{box-sizing:border-box}
-        html,body{min-height:100%;margin:0;padding:0}
-        body{
-            min-height:100vh;
-            background:
-                radial-gradient(circle at top left,rgba(17,85,204,0.14),transparent 34%),
-                radial-gradient(circle at top right,rgba(211,226,255,0.82),transparent 32%),
-                linear-gradient(135deg,#f5f9ff 0%,#fff 42%,#dfeaff 100%);
-            color:var(--cor-texto);font-family:'Wise',Arial,sans-serif;
-        }
+        :root{--cor-principal:#1155cc;--cor-principal-escura:#0d47a1;--cor-clara:#eef4ff;--cor-texto:#17386d;--cor-borda:#a8c0f4;--sombra-card:0 18px 55px rgba(17,85,204,0.18);}
+        *{box-sizing:border-box}html,body{min-height:100%;margin:0;padding:0}
+        body{min-height:100vh;background:radial-gradient(circle at top left,rgba(17,85,204,0.14),transparent 34%),radial-gradient(circle at top right,rgba(211,226,255,0.82),transparent 32%),linear-gradient(135deg,#f5f9ff 0%,#fff 42%,#dfeaff 100%);color:var(--cor-texto);font-family:'Wise',Arial,sans-serif;}
         .main-header{border-bottom:4px solid var(--cor-principal);background:rgba(255,255,255,0.92);backdrop-filter:blur(8px)}
         .wizard-page{width:min(900px,98vw);margin:0 auto;padding:8px 0 18px;text-align:center}
         .wizard-progress{margin:18px auto 22px;padding:18px 18px 20px;border-radius:28px;background:rgba(255,255,255,0.9);box-shadow:0 12px 30px rgba(17,85,204,0.12)}
@@ -235,10 +165,7 @@ TEMPLATE_WIZARD = r'''
         .wizard-label{padding:12px 10px;border:1px solid #c9daf8;border-radius:18px;background:#fff;color:#2f5fb4;font-size:.92rem;font-weight:700;text-align:center;transition:all .25s ease}
         .wizard-label.ativo{border-color:var(--cor-principal);background:var(--cor-clara);color:var(--cor-principal)}
         .wizard-shell{background:rgba(255,255,255,0.88);border:1px solid rgba(255,255,255,0.9);border-radius:34px;box-shadow:var(--sombra-card);overflow:hidden}
-        .wizard-panel[data-step="index"] .hero-card,
-        .wizard-panel[data-step="dados"] .step-card,
-        .wizard-panel[data-step="escolher"] .step-card,
-        .wizard-panel[data-step="revisao"] .step-card{max-width:760px;margin:0 auto}
+        .wizard-panel[data-step="index"] .hero-card,.wizard-panel[data-step="dados"] .step-card,.wizard-panel[data-step="escolher"] .step-card,.wizard-panel[data-step="revisao"] .step-card{max-width:760px;margin:0 auto}
         .wizard-panel{display:none;padding:18px 8px;animation:surgir .28s ease}
         .wizard-panel.ativo{display:block}
         @keyframes surgir{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
@@ -265,19 +192,12 @@ TEMPLATE_WIZARD = r'''
         .step-card{padding:18px 16px;width:100%;margin:0 auto;text-align:center}
         .step-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;margin-top:10px;align-items:start;justify-content:center}
         .step-grid.step-grid--stacked{grid-template-columns:minmax(0,1fr);max-width:540px;margin-left:auto;margin-right:auto}
-        .wizard-panel[data-step="dados"] .form-group,
-        .wizard-panel[data-step="escolher"] .form-group{align-items:stretch;text-align:left}
-        .wizard-panel[data-step="dados"] .form-group label,
-        .wizard-panel[data-step="escolher"] .form-group label{width:100%;text-align:left}
+        .wizard-panel[data-step="dados"] .form-group,.wizard-panel[data-step="escolher"] .form-group{align-items:stretch;text-align:left}
+        .wizard-panel[data-step="dados"] .form-group label,.wizard-panel[data-step="escolher"] .form-group label{width:100%;text-align:left}
         .wizard-panel[data-step="escolher"] .step-grid.step-grid--stacked{max-width:470px}
-        .wizard-panel[data-step="escolher"] .form-group,
-        .wizard-panel[data-step="escolher"] .form-group.full{width:100%;max-width:100%}
+        .wizard-panel[data-step="escolher"] .form-group,.wizard-panel[data-step="escolher"] .form-group.full{width:100%;max-width:100%}
         .wizard-panel[data-step="escolher"] .input-with-action{width:100%;max-width:100%}
-        .wizard-panel[data-step="escolher"] #dias_aula,
-        .wizard-panel[data-step="escolher"] #horario,
-        .wizard-panel[data-step="escolher"] #data_inicio,
-        .wizard-panel[data-step="escolher"] #encerramento,
-        .wizard-panel[data-step="escolher"] #endereco_curso{width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important}
+        .wizard-panel[data-step="escolher"] #dias_aula,.wizard-panel[data-step="escolher"] #horario,.wizard-panel[data-step="escolher"] #data_inicio,.wizard-panel[data-step="escolher"] #encerramento,.wizard-panel[data-step="escolher"] #endereco_curso{width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important}
         .form-group{display:flex;flex-direction:column;gap:4px;width:100%;align-self:start;align-items:center;text-align:center}
         .form-group.full{grid-column:1 / -1}
         .form-group label,.review-title{color:var(--cor-principal);font-size:1rem;font-weight:800}
@@ -315,44 +235,23 @@ TEMPLATE_WIZARD = r'''
         .review-check ul{margin:8px 0 0 18px;padding:0;list-style-position:outside;text-align:left}
         .review-box .form-group{align-items:stretch;text-align:left}
         .review-box .form-group label{width:100%;text-align:left}
-        @media(max-width:860px){
-            .hero-grid,.review-layout{grid-template-columns:1fr}
-            .step-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-            .step-grid.step-grid--stacked{grid-template-columns:minmax(0,1fr);max-width:540px}
-        }
+        @media(max-width:860px){.hero-grid,.review-layout{grid-template-columns:1fr}.step-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.step-grid.step-grid--stacked{grid-template-columns:minmax(0,1fr);max-width:540px}}
         @media(max-width:640px){
-            html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
-            body *{min-width:0}body{overflow-x:hidden}
-            .main-header{padding:10px 12px}
-            .header-logos{display:flex;flex-direction:column;align-items:center;gap:10px}
-            .header-logos img,.logo,.logo-prefeitura-topo{max-width:min(88vw,280px);height:auto}
-            .wizard-page{width:calc(100% - 8px)!important;max-width:100%!important;padding:4px 0 10px}
-            .wizard-progress,.wizard-panel{width:100%!important;max-width:100%!important;padding:8px}
-            .wizard-labels{grid-template-columns:1fr;gap:6px}
-            .hero-card,.step-card,.review-box{width:100%!important;max-width:100%!important;padding:8px}
-            .input-with-action{grid-template-columns:minmax(0,1fr);width:100%!important;max-width:100%!important}
-            .panel-actions>*{width:100%}
-            .step-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-            .step-grid.step-grid--stacked{grid-template-columns:minmax(0,1fr);max-width:100%}
-            .review-layout{grid-template-columns:1fr;max-width:100%;gap:10px}
-            .review-item,.form-group,.form-group input,.form-group select,.form-group textarea,
-            .wizard-shell,.panel-actions,.review-check,.balao-erro{width:100%!important;max-width:100%!important}
+            html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important}body *{min-width:0}body{overflow-x:hidden}
+            .main-header{padding:10px 12px}.header-logos{display:flex;flex-direction:column;align-items:center;gap:10px}.header-logos img,.logo,.logo-prefeitura-topo{max-width:min(88vw,280px);height:auto}
+            .wizard-page{width:calc(100% - 8px)!important;max-width:100%!important;padding:4px 0 10px}.wizard-progress,.wizard-panel{width:100%!important;max-width:100%!important;padding:8px}.wizard-labels{grid-template-columns:1fr;gap:6px}
+            .hero-card,.step-card,.review-box{width:100%!important;max-width:100%!important;padding:8px}.input-with-action{grid-template-columns:minmax(0,1fr);width:100%!important;max-width:100%!important}.panel-actions>*{width:100%}
+            .step-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.step-grid.step-grid--stacked{grid-template-columns:minmax(0,1fr);max-width:100%}.review-layout{grid-template-columns:1fr;max-width:100%;gap:10px}
+            .review-item,.form-group,.form-group input,.form-group select,.form-group textarea,.wizard-shell,.panel-actions,.review-check,.balao-erro{width:100%!important;max-width:100%!important}
             img,svg{max-width:100%!important;height:auto!important}
-            .form-group input,.form-group select,.form-group textarea,.icon-button{min-height:32px;height:32px;font-size:.98em}
-            .form-group textarea{min-height:60px;height:auto}
-            .review-check{flex-direction:row;align-items:flex-start;padding:8px}
-            .review-check input{width:22px;min-width:22px;height:22px;flex-basis:22px}
-            .review-check ul{padding-left:2px}
-            .hero-title,.panel-title{font-size:1.3rem}
-            .hero-subtitle,.panel-subtitle{font-size:.92rem}
-            .wizard-shell{border-radius:16px}
-            .form-group.full{grid-column:auto}
+            .form-group input,.form-group select,.form-group textarea,.icon-button{min-height:32px;height:32px;font-size:.98em}.form-group textarea{min-height:60px;height:auto}
+            .review-check{flex-direction:row;align-items:flex-start;padding:8px}.review-check input{width:22px;min-width:22px;height:22px;flex-basis:22px}.review-check ul{padding-left:2px}
+            .hero-title,.panel-title{font-size:1.3rem}.hero-subtitle,.panel-subtitle{font-size:.92rem}.wizard-shell{border-radius:16px}.form-group.full{grid-column:auto}
         }
     </style>
 </head>
 <body data-start-step="{{ current_step }}">
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=2008632536670997&ev=PageView&noscript=1"/></noscript>
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2008632536670997&ev=PageView&noscript=1"/></noscript>
     <script src="/static/assistant.js"></script>
     <header class="main-header">
         <div class="header-logos">
@@ -371,22 +270,19 @@ TEMPLATE_WIZARD = r'''
         </div>
         <div class="wizard-shell">
             <form id="wizard-form" method="POST" action="{{ url_for('inscricao_unica') }}" autocomplete="off" novalidate>
-                <!-- PASSO 1 -->
                 <section class="wizard-panel" data-step="index">
                     <div class="hero-grid"><div class="hero-card">
-                        <span class="hero-pill">PROJETO: MOVIMENTA RIO</span>
-                        <h1 class="hero-title">TRANSFORME SUA CARREIRA AGORA!</h1>
-                        <p class="hero-subtitle">Cursos de qualifica&#231;&#227;o profissional oferecidos pela Prefeitura do Rio de Janeiro. Invista no seu futuro sem gastar nada!</p>
+                        <span class="hero-pill">MOVIMENTA RIO - CRISTIANE</span>
+                        <h1 class="hero-title">CURSOS GRATUITOS EM SENADOR CAMA&#193;</h1>
+                        <p class="hero-subtitle">Programa Movimenta Rio &#8226; Prefeitura do Rio de Janeiro</p>
                         <div class="hero-highlights">
                             <div class="hero-highlight hero-highlight--courses">
                                 <strong>CURSOS DISPON&#205;VEIS:</strong>
-                                &#128227; GERENCIAMENTO DE TR&#193;FEGO PAGO<br>
-                                &#128718; RECEPCIONISTA<br>
-                                &#129302; INTELIG&#202;NCIA ARTIFICIAL<br>
-                                &#129299; SOCIAL MEDIA<br>
-                                &#128640; MARKETING DIGITAL<br>
-                                &#128230; ASSISTENTE DE LOG&#205;STICA<br>
-                                &#128188; AUXILIAR ADMINISTRATIVO
+                                &#128218; ATENDENTE DE SAL&#195;O DE CAF&#201; DA MANH&#195;<br>
+                                &#128218; ORIENTADOR DE HOTELARIA<br>
+                                &#128194; AUXILIAR ADMINISTRATIVO<br>
+                                &#128218; SOCIAL MEDIA<br>
+                                &#128241; MARKETING DIGITAL
                             </div>
                             <div class="hero-highlight">
                                 <strong>BENEF&#205;CIOS</strong>
@@ -394,12 +290,10 @@ TEMPLATE_WIZARD = r'''
                                     <div class="benefits-viewport">
                                         <div class="benefit-slide ativo">100% Gratuito</div>
                                         <div class="benefit-slide">Certificado de Conclus&#227;o</div>
+                                        <div class="benefit-slide">Material Did&#225;tico Incluso</div>
                                         <div class="benefit-slide">Aulas presenciais com instrutores qualificados</div>
-                                        <div class="benefit-slide">Conte&#250;do EAD complementar para estudar em casa</div>
                                         <div class="benefit-slide">Prepara&#231;&#227;o para o mercado de trabalho</div>
-                                        <div class="benefit-slide">Material did&#225;tico incluso</div>
                                         <div class="benefit-slide">Networking com outros profissionais</div>
-                                        <div class="benefit-slide">Apoio na elabora&#231;&#227;o de curr&#237;culo</div>
                                     </div>
                                     <div class="benefits-controls">
                                         <button type="button" class="benefits-nav" data-benefits-prev aria-label="Anterior">&#8249;</button>
@@ -418,7 +312,6 @@ TEMPLATE_WIZARD = r'''
                         </div>
                     </div></div>
                 </section>
-                <!-- PASSO 2 -->
                 <section class="wizard-panel" data-step="dados">
                     <div class="step-card">
                         <h2 class="panel-title">Dados pessoais</h2>
@@ -438,7 +331,6 @@ TEMPLATE_WIZARD = r'''
                         </div>
                     </div>
                 </section>
-                <!-- PASSO 3 -->
                 <section class="wizard-panel" data-step="escolher">
                     <div class="step-card">
                         <h2 class="panel-title">Escolha seu curso</h2>
@@ -478,7 +370,6 @@ TEMPLATE_WIZARD = r'''
                         </div>
                     </div>
                 </section>
-                <!-- PASSO 4 -->
                 <section class="wizard-panel" data-step="revisao">
                     <div class="step-card">
                         <h2 class="panel-title">Revise antes de finalizar</h2>
@@ -526,21 +417,21 @@ TEMPLATE_WIZARD = r'''
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const stepOrder      = ['index','dados','escolher','revisao'];
-        const progressByStep = {index:25,dados:45,escolher:70,revisao:90};
-        const form           = document.getElementById('wizard-form');
-        const fill           = document.getElementById('wizard-fill');
-        const startStep      = document.body.dataset.startStep || 'index';
-        const panels         = Array.from(document.querySelectorAll('[data-step]'));
-        const labels         = Array.from(document.querySelectorAll('[data-step-label]'));
-        const reviewTargets  = Array.from(document.querySelectorAll('[data-review]'));
-        const benefitsSliders = Array.from(document.querySelectorAll('[data-benefits-slider]'));
-        const localOptions   = {{ local_options|tojson }};
-        const courseCatalog  = {{ course_catalog|tojson }};
-        const courseOptions  = {{ course_options|tojson }};
-        const localOptionsById  = Object.fromEntries(localOptions.map(o=>[String(o.id),o]));
-        const courseCatalogById = Object.fromEntries(courseCatalog.map(o=>[String(o.id),o]));
-        const courseOptionsById = Object.fromEntries(courseOptions.map(o=>[String(o.id),o]));
+        const stepOrder=['index','dados','escolher','revisao'];
+        const progressByStep={index:25,dados:45,escolher:70,revisao:90};
+        const form=document.getElementById('wizard-form');
+        const fill=document.getElementById('wizard-fill');
+        const startStep=document.body.dataset.startStep||'index';
+        const panels=Array.from(document.querySelectorAll('[data-step]'));
+        const labels=Array.from(document.querySelectorAll('[data-step-label]'));
+        const reviewTargets=Array.from(document.querySelectorAll('[data-review]'));
+        const benefitsSliders=Array.from(document.querySelectorAll('[data-benefits-slider]'));
+        const localOptions={{ local_options|tojson }};
+        const courseCatalog={{ course_catalog|tojson }};
+        const courseOptions={{ course_options|tojson }};
+        const localOptionsById=Object.fromEntries(localOptions.map(o=>[String(o.id),o]));
+        const courseCatalogById=Object.fromEntries(courseCatalog.map(o=>[String(o.id),o]));
+        const courseOptionsById=Object.fromEntries(courseOptions.map(o=>[String(o.id),o]));
         const nomeInput=document.getElementById('nome'),generoInput=document.getElementById('genero'),cpfInput=document.getElementById('cpf'),nascimentoInput=document.getElementById('nascimento'),whatsappInput=document.getElementById('whatsapp'),cepInput=document.getElementById('cep'),bairroInput=document.getElementById('bairro'),emailInput=document.getElementById('email');
         const localSelect=document.getElementById('local_id'),courseSelect=document.getElementById('curso_id'),optionInput=document.getElementById('opcao_id');
         const localInput=document.getElementById('local'),cursoInput=document.getElementById('curso'),turmaInput=document.getElementById('turma');
@@ -595,21 +486,20 @@ TEMPLATE_WIZARD = r'''
         optionInput.addEventListener('change',function(){aplicarOpcaoCurso(optionInput.value);syncReview();});
         confirmaDadosInput.addEventListener('change',function(){if(confirmaDadosInput.checked)setError('confirma_dados','');});
         ['nome','genero','whatsapp','cep','bairro','email','local_id','curso_id','opcao_id','local','curso','turma','dias_aula','horario','data_inicio','encerramento','endereco_curso','como_conheceu'].forEach(function(id){const f=document.getElementById(id);if(!f)return;f.addEventListener('input',syncReview);f.addEventListener('change',syncReview);});
-        if(btnCopiarEndereco&&enderecoInput){btnCopiarEndereco.addEventListener('click',async function(){try{await navigator.clipboard.writeText(enderecoInput.value);}catch{enderecoInput.select();document.execCommand('copy');}btnCopiarEndereco.textContent='COPIADO \u2705';setTimeout(()=>{btnCopiarEndereco.textContent='COPIAR \U0001f4cb';},1200);});}
+        if(btnCopiarEndereco&&enderecoInput){btnCopiarEndereco.addEventListener('click',async function(){try{await navigator.clipboard.writeText(enderecoInput.value);}catch{enderecoInput.select();document.execCommand('copy');}btnCopiarEndereco.textContent='COPIADO \u2705';setTimeout(()=>{btnCopiarEndereco.textContent='COPIAR &#128203;';},1200);});}
         atualizarCursos(courseSelect.value);atualizarTurmas(optionInput.value);aplicarLocal(localSelect.value);aplicarCurso(courseSelect.value);aplicarOpcaoCurso(optionInput.value);benefitsSliders.forEach(initBenefitsSlider);syncReview();mostrarPasso(stepOrder.includes(startStep)?startStep:'index');
     });
     </script>
 </body>
 </html>
 '''
-
 TEMPLATE_CONFIRMACAO = r'''
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>FGM</title>
+    <title>Movimenta Rio - Cristiane</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/assistant.css">
     <link href="https://fonts.googleapis.com/css2?family=Wise:wght@400;700;900&display=swap" rel="stylesheet">
@@ -693,13 +583,12 @@ TEMPLATE_CONFIRMACAO = r'''
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "chave-secreta-para-sessao")
 
-
 def get_default_form_data(source=None):
     form_data = {
         "nome":"","genero":"","cpf":"","nascimento":"","whatsapp":"",
         "cep":"","bairro":"","email":"",
         "local_id":"1","curso_id":"","opcao_id":"",
-        "local":"URUCANIA - SANTA CRUZ",
+        "local":"MARCO 7 - SENADOR CAMA\u00c1 \u2014 SALA 1",
         "curso":"","turma":"","dias_aula":"","horario":"",
         "data_inicio":"","encerramento":"","endereco_curso":"",
         "como_conheceu":"","confirma_dados":"",
@@ -714,7 +603,6 @@ def get_default_form_data(source=None):
         fill_form_data_from_selection(form_data)
     return form_data
 
-
 def cpf_valido(cpf):
     digits = re.sub(r"\D","",cpf or "")
     if len(digits)!=11 or len(set(digits))==1: return False
@@ -727,7 +615,6 @@ def cpf_valido(cpf):
     if d==10: d=0
     return d==int(digits[10])
 
-
 def idade_aceita(nascimento):
     try: dn = datetime.strptime(nascimento,"%d/%m/%Y")
     except ValueError: return False
@@ -736,55 +623,45 @@ def idade_aceita(nascimento):
     if (hoje.month,hoje.day)<(dn.month,dn.day): idade-=1
     return 16<=idade<=90
 
-
 def whatsapp_valido(whatsapp):
     digits = re.sub(r"\D","",whatsapp or "")
     if len(digits)!=11: return False
     if not re.fullmatch(r"\(\d{2}\) \d{5}-\d{4}",whatsapp or ""): return False
     return digits[:2] in VALID_DDDS
 
-
 def validate_form_data(form_data):
     errors = {}
     sel_local  = get_local_option(form_data["local_id"])
     sel_course = get_course_catalog_option(form_data["curso_id"])
     sel_option = get_course_option(form_data["opcao_id"])
-
     if not sel_local: errors["local_id"]="Selecione um local v\u00e1lido."
     if not sel_course or sel_course["local_id"]!=form_data["local_id"]:
         errors["curso_id"]="Selecione um curso v\u00e1lido."
     if not sel_option or sel_option["local_id"]!=form_data["local_id"] or sel_option["curso_id"]!=form_data["curso_id"]:
         errors["opcao_id"]="Selecione uma turma v\u00e1lida."
-
     nome = form_data["nome"]
     if not nome: errors["nome"]="Digite seu nome completo."
     elif len(nome)>50: errors["nome"]="O nome deve ter no m\u00e1ximo 50 caracteres."
     elif not NAME_PATTERN.fullmatch(nome): errors["nome"]="Use apenas letras e sinais permitidos no nome."
-
     if form_data["genero"] not in {"Feminino","Masculino","Outro","Prefiro n\u00e3o dizer"}:
         errors["genero"]="Selecione o g\u00eanero."
     if not cpf_valido(form_data["cpf"]): errors["cpf"]="CPF inv\u00e1lido. Verifique e digite novamente."
     if not idade_aceita(form_data["nascimento"]): errors["nascimento"]="Idade permitida: de 16 at\u00e9 90 anos."
     if not whatsapp_valido(form_data["whatsapp"]): errors["whatsapp"]="Informe um WhatsApp com DDD v\u00e1lido do Brasil."
     if not re.fullmatch(r"\d{5}-\d{3}",form_data["cep"] or ""): errors["cep"]="CEP inv\u00e1lido. Formato: 00000-000."
-
     bairro = form_data["bairro"]
     if not bairro: errors["bairro"]="Informe o bairro."
     elif len(bairro)>40: errors["bairro"]="O bairro deve ter no m\u00e1ximo 40 caracteres."
-
     if not ALLOWED_EMAIL_PATTERN.fullmatch(form_data["email"] or ""):
         errors["email"]="Digite um e-mail v\u00e1lido do Gmail, Hotmail, Outlook ou Yahoo."
     if form_data["confirma_dados"]!="sim":
         errors["confirma_dados"]="Confirme os dados para finalizar a inscri\u00e7\u00e3o."
-
     return errors
-
 
 def error_step(errors):
     if "confirma_dados" in errors: return "revisao"
     if "local_id" in errors or "curso_id" in errors or "opcao_id" in errors: return "escolher"
     return "dados"
-
 
 def render_wizard(form_data=None, errors=None, current_step="index"):
     fd = form_data or get_default_form_data()
@@ -800,7 +677,6 @@ def render_wizard(form_data=None, errors=None, current_step="index"):
         form_data=fd,
         generos=["Feminino","Masculino","Outro","Prefiro n\u00e3o dizer"],
     )
-
 
 @app.route("/",methods=["GET"])
 def home(): return render_wizard()
@@ -845,10 +721,8 @@ def confirmacao():
         whatsapp_share_url=build_whatsapp_share_url(home_url),
     )
 
-
 # ── SUPABASE ──────────────────────────────────
 import requests as _requests
-
 SUPABASE_FUNCTION_URL = os.environ.get(
     "SUPABASE_FUNCTION_URL",
     "https://egpyhfzatabyftwajoad.supabase.co/functions/v1/fgm-register",
