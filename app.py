@@ -6,7 +6,6 @@ from datetime import datetime
 from urllib.parse import quote
 from flask import Flask, redirect, render_template_string, request, session, url_for
 from gsheet_utils import append_to_sheet
-
 ALLOWED_EMAIL_PATTERN = re.compile(
     r"^[a-zA-Z0-9_.+-]+@((gmail|hotmail|outlook|yahoo)\.(com|com\.br))$",
     re.IGNORECASE,
@@ -23,19 +22,19 @@ VALID_DDDS = {
     "81", "82", "83", "84", "85", "86", "87", "88", "89",
     "91", "92", "93", "94", "95", "96", "97", "98", "99",
 }
-# \u2500\u2500 LOCAIS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── LOCAIS ───────────────────────────────────────────────────────────────────
 LOCAL_OPTIONS = [
     {"id": "1", "nome": "MARCO 7 - SENADOR CAMA\u00c1 \u2014 SALA 1"},
 ]
-# \u2500\u2500 CAT\u00c1LOGO DE CURSOS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── CATÁLOGO DE CURSOS (com EAD) ─────────────────────────────────────────────
 COURSE_CATALOG = [
-    {"id": "1", "local_id": "1", "nome": "ATENDENTE DE SAL\u00c3O DE CAF\u00c9 DA MANH\u00c3"},
-    {"id": "2", "local_id": "1", "nome": "ORIENTADOR DE HOTELARIA"},
-    {"id": "3", "local_id": "1", "nome": "AUXILIAR ADMINISTRATIVO"},
-    {"id": "4", "local_id": "1", "nome": "SOCIAL MEDIA"},
-    {"id": "5", "local_id": "1", "nome": "MARKETING DIGITAL"},
+    {"id": "1", "local_id": "1", "nome": "ATENDENTE DE SAL\u00c3O DE CAF\u00c9 DA MANH\u00c3 (EAD)"},
+    {"id": "2", "local_id": "1", "nome": "ORIENTADOR DE HOTELARIA (EAD)"},
+    {"id": "3", "local_id": "1", "nome": "AUXILIAR ADMINISTRATIVO (EAD)"},
+    {"id": "4", "local_id": "1", "nome": "SOCIAL MEDIA (EAD)"},
+    {"id": "5", "local_id": "1", "nome": "MARKETING DIGITAL (EAD)"},
 ]
-# \u2500\u2500 TURMAS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── TURMAS ───────────────────────────────────────────────────────────────────
 TURMA_OPTIONS = [
     {"id": "1", "local_id": "1", "curso_id": "1", "turma_codigo": "01",
      "agenda_id": "1", "periodo_id": "1", "encerramento_id": "1", "endereco_id": "1"},
@@ -48,25 +47,25 @@ TURMA_OPTIONS = [
     {"id": "5", "local_id": "1", "curso_id": "5", "turma_codigo": "01",
      "agenda_id": "5", "periodo_id": "2", "encerramento_id": "2", "endereco_id": "1"},
 ]
-# \u2500\u2500 HOR\u00c1RIOS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── HORÁRIOS — todos EAD: vazios ─────────────────────────────────────────────
 SCHEDULE_OPTIONS = {
-    "1": {"dias_aula": "Segunda e Quarta", "horario": "6h30 \u00e0s 8h30"},
-    "2": {"dias_aula": "Segunda e Quarta", "horario": "9h \u00e0s 11h"},
-    "3": {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "9h \u00e0s 11h"},
-    "4": {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "13h \u00e0s 15h"},
-    "5": {"dias_aula": "Ter\u00e7a e Quinta",   "horario": "16h \u00e0s 18h"},
+    "1": {"dias_aula": "", "horario": ""},
+    "2": {"dias_aula": "", "horario": ""},
+    "3": {"dias_aula": "", "horario": ""},
+    "4": {"dias_aula": "", "horario": ""},
+    "5": {"dias_aula": "", "horario": ""},
 }
-# \u2500\u2500 DATAS DE IN\u00cdCIO \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── DATAS DE INÍCIO — todas EAD: vazias ──────────────────────────────────────
 START_DATE_OPTIONS = {
-    "1": "24/08/2026",
-    "2": "25/08/2026",
+    "1": "",
+    "2": "",
 }
-# \u2500\u2500 DATAS DE ENCERRAMENTO \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── DATAS DE ENCERRAMENTO ────────────────────────────────────────────────────
 END_DATE_OPTIONS = {
     "1": "28/09/2026",
     "2": "25/09/2026",
 }
-# \u2500\u2500 ENDERE\u00c7OS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── ENDEREÇOS ────────────────────────────────────────────────────────────────
 ADDRESS_OPTIONS = {
     "1": "\U0001f4cdBloco D'jorge do Marco Sete - Rua Marco Sete, n\u00b0102, Senador Cama\u00e1 - CEP: 21833-325",
 }
@@ -92,34 +91,27 @@ def build_course_options():
             "endereco_curso": ADDRESS_OPTIONS[t["endereco_id"]],
         })
     return result
-
 COURSE_OPTIONS       = build_course_options()
 LOCAL_OPTIONS_BY_ID  = {o["id"]: o for o in LOCAL_OPTIONS}
 COURSE_CATALOG_BY_ID = {o["id"]: o for o in COURSE_CATALOG}
 COURSE_OPTIONS_BY_ID = {o["id"]: o for o in COURSE_OPTIONS}
 COURSE_INFO          = COURSE_OPTIONS[0]
-
 def build_whatsapp_share_url(home_url):
     message = (
         "Acabei de me inscrever em uma oportunidade de qualificacao profissional. "
         f"Confira aqui: {home_url}"
     )
     return f"https://wa.me/?text={quote(message)}"
-
 def get_course_option(option_id):
     return COURSE_OPTIONS_BY_ID.get(str(option_id or ""))
-
 def get_local_option(local_id):
     return LOCAL_OPTIONS_BY_ID.get(str(local_id or ""))
-
 def get_course_catalog_option(course_id):
     return COURSE_CATALOG_BY_ID.get(str(course_id or ""))
-
 def fill_form_data_from_option(form_data, option):
     for k in ("local_id","curso_id","local","curso","turma",
               "dias_aula","horario","data_inicio","encerramento","endereco_curso"):
         form_data[k] = option[k]
-
 def fill_form_data_from_selection(form_data):
     sel_local  = get_local_option(form_data.get("local_id"))
     sel_course = get_course_catalog_option(form_data.get("curso_id"))
@@ -197,7 +189,6 @@ TEMPLATE_WIZARD = r'''
         .wizard-panel[data-step="escolher"] .step-grid.step-grid--stacked{max-width:470px}
         .wizard-panel[data-step="escolher"] .form-group,.wizard-panel[data-step="escolher"] .form-group.full{width:100%;max-width:100%}
         .wizard-panel[data-step="escolher"] .input-with-action{width:100%;max-width:100%}
-        .wizard-panel[data-step="escolher"] #dias_aula,.wizard-panel[data-step="escolher"] #horario,.wizard-panel[data-step="escolher"] #data_inicio,.wizard-panel[data-step="escolher"] #encerramento,.wizard-panel[data-step="escolher"] #endereco_curso{width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important}
         .form-group{display:flex;flex-direction:column;gap:4px;width:100%;align-self:start;align-items:center;text-align:center}
         .form-group.full{grid-column:1 / -1}
         .form-group label,.review-title{color:var(--cor-principal);font-size:1rem;font-weight:800}
@@ -278,11 +269,11 @@ TEMPLATE_WIZARD = r'''
                         <div class="hero-highlights">
                             <div class="hero-highlight hero-highlight--courses">
                                 <strong>CURSOS DISPON&#205;VEIS:</strong>
-                                &#128218; ATENDENTE DE SAL&#195;O DE CAF&#201; DA MANH&#195;<br>
-                                &#128218; ORIENTADOR DE HOTELARIA<br>
-                                &#128194; AUXILIAR ADMINISTRATIVO<br>
-                                &#128218; SOCIAL MEDIA<br>
-                                &#128241; MARKETING DIGITAL
+                                &#128218; ATENDENTE DE SAL&#195;O DE CAF&#201; DA MANH&#195; (EAD)<br>
+                                &#128218; ORIENTADOR DE HOTELARIA (EAD)<br>
+                                &#128194; AUXILIAR ADMINISTRATIVO (EAD)<br>
+                                &#128218; SOCIAL MEDIA (EAD)<br>
+                                &#128241; MARKETING DIGITAL (EAD)
                             </div>
                             <div class="hero-highlight">
                                 <strong>BENEF&#205;CIOS</strong>
@@ -291,9 +282,7 @@ TEMPLATE_WIZARD = r'''
                                         <div class="benefit-slide ativo">100% Gratuito</div>
                                         <div class="benefit-slide">Certificado de Conclus&#227;o</div>
                                         <div class="benefit-slide">Material Did&#225;tico Incluso</div>
-                                        <div class="benefit-slide">Aulas presenciais com instrutores qualificados</div>
                                         <div class="benefit-slide">Prepara&#231;&#227;o para o mercado de trabalho</div>
-                                        <div class="benefit-slide">Networking com outros profissionais</div>
                                     </div>
                                     <div class="benefits-controls">
                                         <button type="button" class="benefits-nav" data-benefits-prev aria-label="Anterior">&#8249;</button>
@@ -358,11 +347,11 @@ TEMPLATE_WIZARD = r'''
                             <input type="hidden" id="local" name="local" value="{{ form_data.get('local', '') }}">
                             <input type="hidden" id="curso" name="curso" value="{{ form_data.get('curso', '') }}">
                             <input type="hidden" id="turma" name="turma" value="{{ form_data.get('turma', '') }}">
-                            <div class="form-group"><label for="dias_aula">DIA DE AULA</label><input type="text" id="dias_aula" name="dias_aula" class="readonly-field" readonly value="{{ form_data.get('dias_aula', '') }}"></div>
-                            <div class="form-group"><label for="horario">HOR&#193;RIO</label><input type="text" id="horario" name="horario" class="readonly-field" readonly value="{{ form_data.get('horario', '') }}"></div>
-                            <div class="form-group"><label for="data_inicio">DATA DE IN&#205;CIO</label><input type="text" id="data_inicio" name="data_inicio" class="readonly-field" readonly value="{{ form_data.get('data_inicio', '') }}"></div>
-                            <div class="form-group"><label for="encerramento">ENCERRAMENTO</label><input type="text" id="encerramento" name="encerramento" class="readonly-field" readonly value="{{ form_data.get('encerramento', '') }}"></div>
-                            <div class="form-group full"><label for="endereco_curso">ENDERE&#199;O</label><div class="input-with-action"><input type="text" id="endereco_curso" name="endereco_curso" class="readonly-field" readonly value="{{ form_data.get('endereco_curso', '') }}"><button type="button" class="icon-button" id="btn-copiar-endereco" title="Copiar">COPIAR &#128203;</button></div></div>
+                            <div class="form-group" id="dias-aula-group"><label for="dias_aula">DIA DE AULA</label><input type="text" id="dias_aula" name="dias_aula" class="readonly-field" readonly value="{{ form_data.get('dias_aula', '') }}"></div>
+                            <div class="form-group" id="horario-group"><label for="horario">HOR&#193;RIO</label><input type="text" id="horario" name="horario" class="readonly-field" readonly value="{{ form_data.get('horario', '') }}"></div>
+                            <div class="form-group" id="data-inicio-group"><label for="data_inicio">DATA DE IN&#205;CIO</label><input type="text" id="data_inicio" name="data_inicio" class="readonly-field" readonly value="{{ form_data.get('data_inicio', '') }}"></div>
+                            <div class="form-group" id="encerramento-group"><label for="encerramento">ENCERRAMENTO</label><input type="text" id="encerramento" name="encerramento" class="readonly-field" readonly value="{{ form_data.get('encerramento', '') }}"></div>
+                            <div class="form-group full" id="endereco-group"><label for="endereco_curso">ENDERE&#199;O</label><div class="input-with-action"><input type="text" id="endereco_curso" name="endereco_curso" class="readonly-field" readonly value="{{ form_data.get('endereco_curso', '') }}"><button type="button" class="icon-button" id="btn-copiar-endereco" title="Copiar">COPIAR &#128203;</button></div></div>
                         </div>
                         <div class="panel-actions">
                             <button type="button" class="secondary-button" data-prev="dados">Voltar</button>
@@ -437,8 +426,11 @@ TEMPLATE_WIZARD = r'''
         const localInput=document.getElementById('local'),cursoInput=document.getElementById('curso'),turmaInput=document.getElementById('turma');
         const diasAulaInput=document.getElementById('dias_aula'),horarioInput=document.getElementById('horario'),dataInicioInput=document.getElementById('data_inicio'),encerramentoInput=document.getElementById('encerramento'),enderecoInput=document.getElementById('endereco_curso');
         const confirmaDadosInput=document.getElementById('confirma_dados'),btnCopiarEndereco=document.getElementById('btn-copiar-endereco');
+        const diasAulaGroup=document.getElementById('dias-aula-group'),horarioGroup=document.getElementById('horario-group'),dataInicioGroup=document.getElementById('data-inicio-group'),encerramentoGroup=document.getElementById('encerramento-group'),enderecoGroup=document.getElementById('endereco-group');
         function somenteDigitos(v){return(v||'').replace(/\D/g,'');}
         function setError(id,msg){const f=document.getElementById(id),e=document.getElementById(id+'-error');if(f)f.classList.toggle('erro-campo',Boolean(msg));if(e){e.textContent=msg||'';e.hidden=!msg;}}
+        function isEAD(op){return !op||(!op.dias_aula&&!op.horario&&!op.data_inicio);}
+        function mostrarCamposInfo(det){if(diasAulaGroup)diasAulaGroup.style.display=det?'':'none';if(horarioGroup)horarioGroup.style.display=det?'':'none';if(dataInicioGroup)dataInicioGroup.style.display=det?'':'none';if(encerramentoGroup)encerramentoGroup.style.display=det?'':'none';if(enderecoGroup)enderecoGroup.style.display=det?'':'none';}
         function initBenefitsSlider(slider){const slides=Array.from(slider.querySelectorAll('.benefit-slide')),dotsHost=slider.querySelector('[data-benefits-dots]'),prevBtn=slider.querySelector('[data-benefits-prev]'),nextBtn=slider.querySelector('[data-benefits-next]');if(!slides.length||!dotsHost||!prevBtn||!nextBtn)return;let cur=Math.max(0,slides.findIndex(s=>s.classList.contains('ativo'))),tid;const dots=slides.map((_,i)=>{const d=document.createElement('button');d.type='button';d.className='benefits-dot';d.setAttribute('aria-label','Benef\u00edcio '+(i+1));d.addEventListener('click',()=>{show(i);restart();});dotsHost.appendChild(d);return d;});function show(i){cur=(i+slides.length)%slides.length;slides.forEach((s,si)=>s.classList.toggle('ativo',si===cur));dots.forEach((d,di)=>d.classList.toggle('ativo',di===cur));}function restart(){clearInterval(tid);tid=setInterval(()=>show(cur+1),3200);}prevBtn.addEventListener('click',()=>{show(cur-1);restart();});nextBtn.addEventListener('click',()=>{show(cur+1);restart();});slider.addEventListener('mouseenter',()=>clearInterval(tid));slider.addEventListener('mouseleave',restart);show(cur);restart();}
         function mostrarPasso(step){panels.forEach(p=>p.classList.toggle('ativo',p.dataset.step===step));labels.forEach(l=>l.classList.toggle('ativo',l.dataset.stepLabel===step));fill.style.width=(progressByStep[step]||25)+'%';window.scrollTo({top:0,behavior:'smooth'});}
         function syncReview(){reviewTargets.forEach(function(t){const f=document.getElementById(t.dataset.review);if(!f){t.textContent='';return;}if(f.tagName==='SELECT'){const s=f.options[f.selectedIndex];t.textContent=s?s.text.trim():'';return;}t.textContent=f.value.trim();});}
@@ -467,7 +459,7 @@ TEMPLATE_WIZARD = r'''
         function limparDetalhesCurso(){turmaInput.value='';diasAulaInput.value='';horarioInput.value='';dataInicioInput.value='';encerramentoInput.value='';enderecoInput.value='';}
         function aplicarLocal(localId){const s=localOptionsById[String(localId||'')];localInput.value=s?s.nome:'';}
         function aplicarCurso(courseId){const s=courseCatalogById[String(courseId||'')];cursoInput.value=s?s.nome:'';}
-        function aplicarOpcaoCurso(optionId){const opt=courseOptionsById[String(optionId)];if(!opt){turmaInput.value='';limparDetalhesCurso();return;}localSelect.value=String(opt.local_id);courseSelect.value=String(opt.curso_id);localInput.value=opt.local;optionInput.value=String(opt.id);cursoInput.value=opt.curso;turmaInput.value=opt.turma;diasAulaInput.value=opt.dias_aula;horarioInput.value=opt.horario;dataInicioInput.value=opt.data_inicio;encerramentoInput.value=opt.encerramento;enderecoInput.value=opt.endereco_curso;setError('curso_id','');setError('opcao_id','');}
+        function aplicarOpcaoCurso(optionId){const opt=courseOptionsById[String(optionId)];if(!opt){turmaInput.value='';limparDetalhesCurso();mostrarCamposInfo(false);return;}localSelect.value=String(opt.local_id);courseSelect.value=String(opt.curso_id);localInput.value=opt.local;optionInput.value=String(opt.id);cursoInput.value=opt.curso;turmaInput.value=opt.turma;diasAulaInput.value=opt.dias_aula;horarioInput.value=opt.horario;dataInicioInput.value=opt.data_inicio;encerramentoInput.value=opt.encerramento;enderecoInput.value=opt.endereco_curso;setError('curso_id','');setError('opcao_id','');mostrarCamposInfo(!isEAD(opt));syncReview();}
         function atualizarCursos(selectedCourseId){const cursos=getCoursesForLocal(localSelect.value);setSelectOptions(courseSelect,cursos,'Selecione um curso',selectedCourseId,'nome');aplicarLocal(localSelect.value);aplicarCurso(courseSelect.value);}
         function atualizarTurmas(selectedOptionId){const turmas=getTurmasForCourse(courseSelect.value);setSelectOptions(optionInput,turmas,'Selecione uma turma',selectedOptionId,'turma');aplicarCurso(courseSelect.value);}
         async function buscarBairroPorCep(){const cepLimpo=somenteDigitos(cepInput.value);if(cepLimpo.length!==8)return;try{const res=await fetch('https://viacep.com.br/ws/'+cepLimpo+'/json/');const data=await res.json();if(!data.erro&&data.bairro){bairroInput.value=data.bairro;validarBairro();syncReview();}}catch(e){console.error(e);}}
@@ -481,12 +473,13 @@ TEMPLATE_WIZARD = r'''
         cepInput.addEventListener('input',function(){mascaraCep();bairroInput.value='';if(cepInput.value.length===9){validarCampoCep();buscarBairroPorCep();}else setError('cep','');syncReview();});
         bairroInput.addEventListener('blur',function(){validarBairro();syncReview();});
         emailInput.addEventListener('input',function(){if(emailInput.value.trim())validarCampoEmail();else setError('email','');syncReview();});
-        localSelect.addEventListener('change',function(){atualizarCursos('');atualizarTurmas('');optionInput.value='';cursoInput.value='';limparDetalhesCurso();syncReview();});
-        courseSelect.addEventListener('change',function(){atualizarTurmas('');optionInput.value='';aplicarCurso(courseSelect.value);limparDetalhesCurso();setError('curso_id','');syncReview();});
+        localSelect.addEventListener('change',function(){atualizarCursos('');atualizarTurmas('');optionInput.value='';cursoInput.value='';limparDetalhesCurso();mostrarCamposInfo(false);syncReview();});
+        courseSelect.addEventListener('change',function(){atualizarTurmas('');optionInput.value='';aplicarCurso(courseSelect.value);limparDetalhesCurso();mostrarCamposInfo(false);setError('curso_id','');syncReview();});
         optionInput.addEventListener('change',function(){aplicarOpcaoCurso(optionInput.value);syncReview();});
         confirmaDadosInput.addEventListener('change',function(){if(confirmaDadosInput.checked)setError('confirma_dados','');});
         ['nome','genero','whatsapp','cep','bairro','email','local_id','curso_id','opcao_id','local','curso','turma','dias_aula','horario','data_inicio','encerramento','endereco_curso','como_conheceu'].forEach(function(id){const f=document.getElementById(id);if(!f)return;f.addEventListener('input',syncReview);f.addEventListener('change',syncReview);});
         if(btnCopiarEndereco&&enderecoInput){btnCopiarEndereco.addEventListener('click',async function(){try{await navigator.clipboard.writeText(enderecoInput.value);}catch{enderecoInput.select();document.execCommand('copy');}btnCopiarEndereco.textContent='COPIADO \u2705';setTimeout(()=>{btnCopiarEndereco.textContent='COPIAR &#128203;';},1200);});}
+        mostrarCamposInfo(false);
         atualizarCursos(courseSelect.value);atualizarTurmas(optionInput.value);aplicarLocal(localSelect.value);aplicarCurso(courseSelect.value);aplicarOpcaoCurso(optionInput.value);benefitsSliders.forEach(initBenefitsSlider);syncReview();mostrarPasso(stepOrder.includes(startStep)?startStep:'index');
     });
     </script>
@@ -578,11 +571,9 @@ TEMPLATE_CONFIRMACAO = r'''
 </body>
 </html>
 '''
-
-# ── FLASK APP ─────────────────────────────────
+# ── FLASK APP ─────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "chave-secreta-para-sessao")
-
 def get_default_form_data(source=None):
     form_data = {
         "nome":"","genero":"","cpf":"","nascimento":"","whatsapp":"",
@@ -602,7 +593,6 @@ def get_default_form_data(source=None):
                 form_data[key] = (value or "").strip()
         fill_form_data_from_selection(form_data)
     return form_data
-
 def cpf_valido(cpf):
     digits = re.sub(r"\D","",cpf or "")
     if len(digits)!=11 or len(set(digits))==1: return False
@@ -614,7 +604,6 @@ def cpf_valido(cpf):
     d=(total*10)%11
     if d==10: d=0
     return d==int(digits[10])
-
 def idade_aceita(nascimento):
     try: dn = datetime.strptime(nascimento,"%d/%m/%Y")
     except ValueError: return False
@@ -622,13 +611,11 @@ def idade_aceita(nascimento):
     idade = hoje.year - dn.year
     if (hoje.month,hoje.day)<(dn.month,dn.day): idade-=1
     return 16<=idade<=90
-
 def whatsapp_valido(whatsapp):
     digits = re.sub(r"\D","",whatsapp or "")
     if len(digits)!=11: return False
     if not re.fullmatch(r"\(\d{2}\) \d{5}-\d{4}",whatsapp or ""): return False
     return digits[:2] in VALID_DDDS
-
 def validate_form_data(form_data):
     errors = {}
     sel_local  = get_local_option(form_data["local_id"])
@@ -657,12 +644,10 @@ def validate_form_data(form_data):
     if form_data["confirma_dados"]!="sim":
         errors["confirma_dados"]="Confirme os dados para finalizar a inscri\u00e7\u00e3o."
     return errors
-
 def error_step(errors):
     if "confirma_dados" in errors: return "revisao"
     if "local_id" in errors or "curso_id" in errors or "opcao_id" in errors: return "escolher"
     return "dados"
-
 def render_wizard(form_data=None, errors=None, current_step="index"):
     fd = form_data or get_default_form_data()
     selected_option = get_course_option(fd.get("opcao_id")) or COURSE_INFO
@@ -677,10 +662,8 @@ def render_wizard(form_data=None, errors=None, current_step="index"):
         form_data=fd,
         generos=["Feminino","Masculino","Outro","Prefiro n\u00e3o dizer"],
     )
-
 @app.route("/",methods=["GET"])
 def home(): return render_wizard()
-
 @app.route("/inscricao",methods=["GET","POST"])
 def inscricao_unica():
     if request.method=="GET": return redirect(url_for("home"))
@@ -704,12 +687,10 @@ def inscricao_unica():
         print("Envio para Supabase concluido:",response.status_code)
     except Exception as exc: print("Erro ao enviar para Supabase:",exc)
     return redirect(url_for("confirmacao"))
-
 @app.route("/curso",methods=["GET","POST"])
 @app.route("/revisao",methods=["GET","POST"])
 @app.route("/wizard",methods=["GET"])
 def legacy_routes(): return redirect(url_for("home"))
-
 @app.route("/confirmacao",methods=["GET"])
 def confirmacao():
     protocolo = session.get("protocolo")
@@ -720,44 +701,26 @@ def confirmacao():
         protocolo=protocolo,
         whatsapp_share_url=build_whatsapp_share_url(home_url),
     )
-
-# ── SUPABASE ──────────────────────────────────
+# ── SUPABASE ──────────────────────────────────────────────────────────────────
 import requests as _requests
-SUPABASE_FUNCTION_URL = os.environ.get(
-    "SUPABASE_FUNCTION_URL",
-    "https://egpyhfzatabyftwajoad.supabase.co/functions/v1/fgm-register",
-)
-SUPABASE_API_KEY = os.environ.get(
-    "SUPABASE_API_KEY",
-    "jyUskwXkc54ZcMPyADLFN6LvZO0I60e3",
-)
-
+SUPABASE_FUNCTION_URL = os.environ.get("SUPABASE_FUNCTION_URL","https://egpyhfzatabyftwajoad.supabase.co/functions/v1/fgm-register")
+SUPABASE_API_KEY = os.environ.get("SUPABASE_API_KEY","jyUskwXkc54ZcMPyADLFN6LvZO0I60e3")
 def normalize_phone_number(phone):
     digits = re.sub(r"[^\d]","",phone or "")
     return f"55{digits}" if len(digits)==11 else digits
-
 def send_registration_to_supabase(form_data):
     phone = normalize_phone_number(form_data.get("whatsapp",""))
     payload = {
-        "name":          form_data.get("nome",""),
-        "phone":         phone,
-        "curso":         form_data.get("curso",""),
-        "local":         form_data.get("local",""),
-        "dia_semana":    form_data.get("dias_aula",""),
-        "dias_semana":   form_data.get("dias_aula",""),
-        "data_inicio":   form_data.get("data_inicio",""),
-        "data_inscricao": datetime.utcnow().isoformat()+"Z",
-        "horario":       form_data.get("horario",""),
+        "name":form_data.get("nome",""),"phone":phone,
+        "curso":form_data.get("curso",""),"local":form_data.get("local",""),
+        "dia_semana":form_data.get("dias_aula",""),"dias_semana":form_data.get("dias_aula",""),
+        "data_inicio":form_data.get("data_inicio",""),"data_inscricao":datetime.utcnow().isoformat()+"Z",
+        "horario":form_data.get("horario",""),
     }
-    headers = {
-        "Content-Type":"application/json","Accept":"application/json",
-        "x-api-key":SUPABASE_API_KEY,"Authorization":f"Bearer {SUPABASE_API_KEY}",
-    }
+    headers = {"Content-Type":"application/json","Accept":"application/json","x-api-key":SUPABASE_API_KEY,"Authorization":f"Bearer {SUPABASE_API_KEY}"}
     response = _requests.post(SUPABASE_FUNCTION_URL,headers=headers,json=payload,timeout=10)
-    if not response.ok:
-        raise RuntimeError(f"Supabase retornou {response.status_code}: {response.text[:500]}")
+    if not response.ok: raise RuntimeError(f"Supabase retornou {response.status_code}: {response.text[:500]}")
     return response
-
 if __name__=="__main__":
     port = int(os.environ.get("PORT",5000))
     app.run(host="0.0.0.0",port=port)
