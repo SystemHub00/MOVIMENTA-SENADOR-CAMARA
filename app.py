@@ -128,7 +128,7 @@ TEMPLATE_WIZARD = r'''
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Movimenta Rio</title>
+    <title>Movimenta Rio - Cristiane</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/assistant.css">
     <link href="https://fonts.googleapis.com/css2?family=Wise:wght@400;700;900&display=swap" rel="stylesheet">
@@ -269,11 +269,11 @@ TEMPLATE_WIZARD = r'''
                         <div class="hero-highlights">
                             <div class="hero-highlight hero-highlight--courses">
                                 <strong>CURSOS DISPON&#205;VEIS:</strong>
-                                &#128218; ATENDENTE DE SAL&#195;O DE CAF&#201; DA MANH&#195; (EAD)<br>
-                                &#128218; ORIENTADOR DE HOTELARIA (EAD)<br>
-                                &#128194; AUXILIAR ADMINISTRATIVO (EAD)<br>
-                                &#128218; SOCIAL MEDIA (EAD)<br>
-                                &#128241; MARKETING DIGITAL (EAD)
+                                &#128218; ATENDENTE DE SAL&#195;O DE CAF&#201; DA MANH&#195;<br>
+                                &#128218; ORIENTADOR DE HOTELARIA<br>
+                                &#128194; AUXILIAR ADMINISTRATIVO<br>
+                                &#128218; SOCIAL MEDIA<br>
+                                &#128241; MARKETING DIGITAL
                             </div>
                             <div class="hero-highlight">
                                 <strong>BENEF&#205;CIOS</strong>
@@ -282,7 +282,6 @@ TEMPLATE_WIZARD = r'''
                                         <div class="benefit-slide ativo">100% Gratuito</div>
                                         <div class="benefit-slide">Certificado de Conclus&#227;o</div>
                                         <div class="benefit-slide">Material Did&#225;tico Incluso</div>
-                                        <div class="benefit-slide">Prepara&#231;&#227;o para o mercado de trabalho</div>
                                     </div>
                                     <div class="benefits-controls">
                                         <button type="button" class="benefits-nav" data-benefits-prev aria-label="Anterior">&#8249;</button>
