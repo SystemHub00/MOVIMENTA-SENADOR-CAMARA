@@ -263,7 +263,7 @@ TEMPLATE_WIZARD = r'''
             <form id="wizard-form" method="POST" action="{{ url_for('inscricao_unica') }}" autocomplete="off" novalidate>
                 <section class="wizard-panel" data-step="index">
                     <div class="hero-grid"><div class="hero-card">
-                        <span class="hero-pill">MOVIMENTA RIO - CRISTIANE</span>
+                        <span class="hero-pill">MOVIMENTA RIO</span>
                         <h1 class="hero-title">CURSOS GRATUITOS EM SENADOR CAMA&#193;</h1>
                         <p class="hero-subtitle">Programa Movimenta Rio &#8226; Prefeitura do Rio de Janeiro</p>
                         <div class="hero-highlights">
