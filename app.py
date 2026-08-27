@@ -336,7 +336,7 @@ TEMPLATE_WIZARD = r'''
                                 </select>
                                 <div class="balao-erro" id="curso_id-error" {% if not errors.get('curso_id') %}hidden{% endif %}>{{ errors.get('curso_id', '') }}</div>
                             </div>
-                            <div class="form-group full">
+                            <div class="form-group full" style="display:none;">
                                 <label for="opcao_id">Turma *</label>
                                 <select id="opcao_id" name="opcao_id">
                                     <option value="" {% if not form_data.get('opcao_id') %}selected{% endif %}>Selecione uma turma</option>
@@ -461,7 +461,7 @@ TEMPLATE_WIZARD = r'''
         function aplicarCurso(courseId){const s=courseCatalogById[String(courseId||'')];cursoInput.value=s?s.nome:'';}
         function aplicarOpcaoCurso(optionId){const opt=courseOptionsById[String(optionId)];if(!opt){turmaInput.value='';limparDetalhesCurso();mostrarCamposInfo(false);return;}localSelect.value=String(opt.local_id);courseSelect.value=String(opt.curso_id);localInput.value=opt.local;optionInput.value=String(opt.id);cursoInput.value=opt.curso;turmaInput.value=opt.turma;diasAulaInput.value=opt.dias_aula;horarioInput.value=opt.horario;dataInicioInput.value=opt.data_inicio;encerramentoInput.value=opt.encerramento;enderecoInput.value=opt.endereco_curso;setError('curso_id','');setError('opcao_id','');mostrarCamposInfo(!isEAD(opt));syncReview();}
         function atualizarCursos(selectedCourseId){const cursos=getCoursesForLocal(localSelect.value);setSelectOptions(courseSelect,cursos,'Selecione um curso',selectedCourseId,'nome');aplicarLocal(localSelect.value);aplicarCurso(courseSelect.value);}
-        function atualizarTurmas(selectedOptionId){const turmas=getTurmasForCourse(courseSelect.value);setSelectOptions(optionInput,turmas,'Selecione uma turma',selectedOptionId,'turma');aplicarCurso(courseSelect.value);}
+        function atualizarTurmas(selectedOptionId){const turmas=getTurmasForCourse(courseSelect.value);setSelectOptions(optionInput,turmas,'Selecione uma turma',selectedOptionId,'turma');aplicarCurso(courseSelect.value);if(turmas.length===1&&!selectedOptionId){aplicarOpcaoCurso(String(turmas[0].id));}}
         async function buscarBairroPorCep(){const cepLimpo=somenteDigitos(cepInput.value);if(cepLimpo.length!==8)return;try{const res=await fetch('https://viacep.com.br/ws/'+cepLimpo+'/json/');const data=await res.json();if(!data.erro&&data.bairro){bairroInput.value=data.bairro;validarBairro();syncReview();}}catch(e){console.error(e);}}
         document.querySelectorAll('[data-next]').forEach(function(btn){btn.addEventListener('click',function(){const target=btn.dataset.next;if(target==='escolher'&&!validarPassoDados())return;if(target==='revisao'&&!validarPassoEscolher())return;syncReview();mostrarPasso(target);});});
         document.querySelectorAll('[data-prev]').forEach(function(btn){btn.addEventListener('click',function(){syncReview();mostrarPasso(btn.dataset.prev);});});
