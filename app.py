@@ -128,7 +128,7 @@ TEMPLATE_WIZARD = r'''
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Movimenta Rio - Cristiane</title>
+    <title>Movimenta Rio</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/assistant.css">
     <link href="https://fonts.googleapis.com/css2?family=Wise:wght@400;700;900&display=swap" rel="stylesheet">
@@ -264,7 +264,7 @@ TEMPLATE_WIZARD = r'''
                 <section class="wizard-panel" data-step="index">
                     <div class="hero-grid"><div class="hero-card">
                         <span class="hero-pill">MOVIMENTA RIO</span>
-                        <h1 class="hero-title">CURSOS GRATUITOS EM SENADOR CAMA&#193;</h1>
+                        <h1 class="hero-title">CURSOS GRATUITOS EM SENADOR CAMAR#193;</h1>
                         <p class="hero-subtitle">Programa Movimenta Rio &#8226; Prefeitura do Rio de Janeiro</p>
                         <div class="hero-highlights">
                             <div class="hero-highlight hero-highlight--courses">
