@@ -264,7 +264,7 @@ TEMPLATE_WIZARD = r'''
                 <section class="wizard-panel" data-step="index">
                     <div class="hero-grid"><div class="hero-card">
                         <span class="hero-pill">MOVIMENTA RIO</span>
-                        <h1 class="hero-title">CURSOS GRATUITOS EM SENADOR CAMAR#193;</h1>
+                        <h1 class="hero-title">CURSOS GRATUITOS EM SENADOR CAMARA</h1>
                         <p class="hero-subtitle">Programa Movimenta Rio &#8226; Prefeitura do Rio de Janeiro</p>
                         <div class="hero-highlights">
                             <div class="hero-highlight hero-highlight--courses">
